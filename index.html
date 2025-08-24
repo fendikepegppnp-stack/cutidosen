@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sistem Informasi Cuti Dosen</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+  <div class="overlay">
+    <header>
+      <div class="logo">
+        <img
+          src="https://res.cloudinary.com/dvul7dq3b/image/upload/v1755843240/logowebp_bqssky.webp"
+          alt="Logo Kampus"
+        />
+      </div>
+      <h1>Informasi Sisa Cuti Dosen</h1>
+    </header>
+
+    <main>
+      <form id="searchForm">
+        <div class="input-box">
+          <input
+            type="text"
+            id="search"
+            placeholder="Masukkan NIP/Nama"
+            aria-label="Masukkan NIP atau Nama Dosen"
+          />
+          <button type="submit" aria-label="Cari Data Dosen">Cari Data</button>
+        </div>
+      </form>
+
+      <div class="popup" id="popup"></div>
+    </main>
+  </div>
+
+  <script>
+    async function cari() {
+      const query = document.getElementById("search").value.trim();
+      const popup = document.getElementById("popup");
+      if (!query) return;
+
+      popup.style.display = "block";
+      popup.innerHTML = `<div class="loading">Sedang mencari data<span></span></div>`;
+
+      const url =
+        "https://script.google.com/macros/s/AKfycbyM-TiH0DZnK7LVGQcp84XixW4dW79es8qFeJPjqy7ouTYH1qyfXYEnMl6VnHKZ94YUzw/exec?query=" +
+        encodeURIComponent(query);
+
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+        showData(data);
+      } catch (err) {
+        console.error(err);
+        popup.innerHTML =
+          "<p style='color:red;'>Terjadi kesalahan saat mengambil data</p>";
+      }
+    }
+
+    function showData(data) {
+      const popup = document.getElementById("popup");
+
+      if (!data || !data.dosen) {
+        popup.innerHTML = "<p>Data tidak ditemukan</p>";
+        return;
+      }
+
+      const sisaCuti = data.dosen["Sisa Cuti (JML - T)"] ?? 0;
+      const sudahDipakai = data.dosen["Cuti Terpakai (T)"] ?? 0;
+
+      let html = `
+        <div class="data-header">
+          <h2>${data.dosen.Nama.toUpperCase()}</h2>
+          <p>${data.dosen.NIP}</p>
+        </div>
+
+        <div class="cuti-box-container">
+          <div class="cuti-box sisa">
+            <h3>SISA CUTI</h3>
+            <p>${sisaCuti}</p>
+          </div>
+          <div class="cuti-box dipakai">
+            <h3>SUDAH DIPAKAI</h3>
+            <p>${sudahDipakai}</p>
+          </div>
+        </div>
+      `;
+
+      popup.innerHTML = html;
+    }
+
+    document
+      .getElementById("searchForm")
+      .addEventListener("submit", function (e) {
+        e.preventDefault();
+        cari();
+      });
+  </script>
+</body>
+</html>
